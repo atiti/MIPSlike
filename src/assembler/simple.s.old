@@ -1,0 +1,40 @@
+	.text
+	.align	2
+	.globl	main
+	.ent	main
+	.type	main, @function
+main:
+	.frame	$sp,24,$31		# vars= 16, regs= 0/0, args= 0, gp= 8
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.cpload	$25
+	.set	reorder
+	li	$sp,31
+	addi	$sp,$sp,-24	 #,,
+	sw	$0,8($sp)	 #, i
+	sw	$0,12($sp)	 #, a
+	li	$2,10			# 0xa	 # tmp182,
+	nop
+	nop
+	sw	$2,16($sp)	 # tmp182, b
+$L2:
+	lw	$2,8($sp)	 # i, i
+	lw	$3,16($sp)	 # b, b
+	slt	$2,$2,$3	 # tmp185, i, b
+	beq	$2,$0,$L3	 #, tmp185,
+	lw	$2,8($sp)	 # i, i
+	nop
+	sw	$2,12($sp)	 # i, a
+	lw	$2,8($sp)	 # i, i
+	addi	$2,$2,1	 # tmp188, i,
+	nop
+	nop
+	sw	$2,8($sp)	 # tmp188, i
+	b	$L2	 #
+$L3:
+	move	$2,$0	 # <result>,
+	addi	$sp,$sp,24	 #,,
+	j	$31	 #
+	.end	main
+	.ident	"GCC: (GNU) 3.4.6"

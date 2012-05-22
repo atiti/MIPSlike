@@ -1,0 +1,88 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use ieee.std_logic_unsigned.ALL;
+
+entity registerfile is
+    Generic ( bit_width : integer := 32; -- bit width of the data lines
+              num_regs : integer := 32 -- number of registers 
+            );
+    Port (read_reg1, read_reg2, write_reg: in std_logic_vector(4 downto 0);
+          clk,reset,write_en,write_en2 : in std_logic;
+          write_data,write_data2 : in std_logic_vector(bit_width-1 downto 0);
+          read_data1, read_data2 : out std_logic_vector(bit_width-1 downto 0)
+    );
+end registerfile;
+         
+architecture behavioral of registerfile is
+  
+  type regfile is array(num_regs-1 downto 0) of std_logic_vector(bit_width-1 downto 0);
+  signal tmpregfile : regfile;
+  
+  component reg is
+    generic ( bit_width : natural := 32 );
+    port ( clk,clear,load : in std_logic;
+           data_in : in std_logic_vector(bit_width-1 downto 0);
+           data_out : out std_logic_vector(bit_width-1 downto 0)
+    );
+  end component;
+
+
+  component decoder is
+    generic ( bit_width : integer := 32;
+              num_vals : integer := 5 );
+    port (I: in std_logic_vector(num_vals-1 downto 0);
+          en : in std_logic;
+          O : out std_logic_vector(bit_width-1 downto 0));
+  end component;
+
+  component mux32to1 is
+    generic ( bit_width : integer := 32 );
+    port (I0,I1,I2,I3,I4,I5,I6,I7 : in std_logic_vector(bit_width-1 downto 0);
+          I8,I9,I10,I11,I12,I13,I14,I15 : in std_logic_vector(bit_width-1 downto 0);
+          I16,I17,I18,I19,I20,I21,I22,I23 : in std_logic_vector(bit_width-1 downto 0);
+          I24,I25,I26,I27,I28,I29,I30,I31 : in std_logic_vector(bit_width-1 downto 0);
+          S : in std_logic_vector (4 downto 0);
+          O : out std_logic_vector(bit_width-1 downto 0));
+  end component;
+
+  signal loadtmp, muxout1, muxout2 : std_logic_vector(bit_width-1 downto 0);
+  --signal dataintmp,dataouttmp : std_logic_vector(31 downto 0);
+begin
+  tmpregfile(0) <= (others => '0'); -- Force register 0 to be zero
+  
+  regs: for n in 1 to num_regs-2 generate
+    regx: reg port map (clk=>clk,clear=>reset,load=>loadtmp(n),data_in=>write_data,data_out=>tmpregfile(n));
+  end generate regs;
+  
+  -- Special case for register 31 (return address)
+  reg31: reg port map (clk=>clk,clear=>reset,load=>write_en2,data_in=>write_data2,data_out=>tmpregfile(31));
+  
+  loaddec: decoder port map(I=>write_reg,en=>write_en,O=>loadtmp);
+  
+  
+  mux1: mux32to1 port map(I0=>tmpregfile(0),I1=>tmpregfile(1),I2=>tmpregfile(2),I3=>tmpregfile(3),
+                          I4=>tmpregfile(4),I5=>tmpregfile(5),I6=>tmpregfile(6),I7=>tmpregfile(7),
+                          I8=>tmpregfile(8),I9=>tmpregfile(9),I10=>tmpregfile(10),I11=>tmpregfile(11),
+                          I12=>tmpregfile(12),I13=>tmpregfile(13),I14=>tmpregfile(14),I15=>tmpregfile(15),  
+                          I16=>tmpregfile(16),I17=>tmpregfile(17),I18=>tmpregfile(18),I19=>tmpregfile(19),
+                          I20=>tmpregfile(20),I21=>tmpregfile(21),I22=>tmpregfile(22),I23=>tmpregfile(23),
+                          I24=>tmpregfile(24),I25=>tmpregfile(25),I26=>tmpregfile(26),I27=>tmpregfile(27),
+                          I28=>tmpregfile(28),I29=>tmpregfile(29),I30=>tmpregfile(30),I31=>tmpregfile(31),
+                          S=>read_reg1,O=>muxout1);
+  mux2: mux32to1 port map(I0=>tmpregfile(0),I1=>tmpregfile(1),I2=>tmpregfile(2),I3=>tmpregfile(3),
+                          I4=>tmpregfile(4),I5=>tmpregfile(5),I6=>tmpregfile(6),I7=>tmpregfile(7),
+                          I8=>tmpregfile(8),I9=>tmpregfile(9),I10=>tmpregfile(10),I11=>tmpregfile(11),
+                          I12=>tmpregfile(12),I13=>tmpregfile(13),I14=>tmpregfile(14),I15=>tmpregfile(15),  
+                          I16=>tmpregfile(16),I17=>tmpregfile(17),I18=>tmpregfile(18),I19=>tmpregfile(19),
+                          I20=>tmpregfile(20),I21=>tmpregfile(21),I22=>tmpregfile(22),I23=>tmpregfile(23),
+                          I24=>tmpregfile(24),I25=>tmpregfile(25),I26=>tmpregfile(26),I27=>tmpregfile(27),
+                          I28=>tmpregfile(28),I29=>tmpregfile(29),I30=>tmpregfile(30),I31=>tmpregfile(31),
+                          S=>read_reg2,O=>muxout2);
+  
+  
+  read_data1 <= muxout1;
+  read_data2 <= muxout2;
+  
+end behavioral;
+
+

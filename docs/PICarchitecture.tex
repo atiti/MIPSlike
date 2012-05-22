@@ -1,0 +1,25 @@
+\subsubsection{The PIC architecture}
+With over 10 billion PIC microcontrollers sold world-wide as of September 2011\footnote{http://www.microchip.com/pagehandler/en-us/press-release/microchip-technology-delivers-10-billionth-pic-mic.html}, the RISC based PIC family is one the most common architectures around. The instruction set has been expanded over the years, but in the following, we have chosen to focus on the PIC16 instruction set with just 35 instructions (even though an even simpler 12-bit instruction word set with 32 instructions exists).
+
+The instruction set is of the accumulator type, which means that many instructions use an implied accumulator register called W0, which allows for shorter opcodes, since the register address is not needed in the instruction. These instructions often have a 1-bit input operand called d, which allows selecting whether to write the result to the accumulator register or to the other register involved.
+The instructions are 14-bit words, and can be divided into four general categories:
+\begin{itemize}
+\item Byte-oriented file register operations
+\begin{itemize}
+\item Operations on byte values, in the accumulator register and one additional register.
+\end{itemize}
+\item Bit-oriented file register operations
+\begin{itemize}
+\item Operations that test and/or set specific bits in a register.
+\end{itemize}
+\item Literal operations
+\begin{itemize}
+\item Operations on the accumulator register with a byte value given as the 8 LSB of the instruction
+\end{itemize}
+\item Control operations
+\begin{itemize}
+\item Sleep, Goto, Return etc.
+\end{itemize}
+\end{itemize}
+The instruction set supports 128 8-bit registers, of which the first 32 are reserved for special purpose registers, and the remaining 96 bytes are available as regular RAM.
+

@@ -1,0 +1,130 @@
+#include "standard.h"
+
+#define WINDOW_WIDTH 99
+#define WINDOW_OFFSCREEN 29
+#define WINDOW_HEIGHT 32
+
+#define ROW (WINDOW_WIDTH+WINDOW_OFFSCREEN)
+
+#define TOPROW (2*ROW)
+
+#define BOTTOM (WINDOW_WIDTH+WINDOW_OFFSCREEN)*(WINDOW_HEIGHT-1)
+
+void draw_walls() {
+	int a = 0, b=0;
+	for (a=0;a<WINDOW_WIDTH;a++) {
+		put_chr_vga('#', 0, a);
+		put_chr_vga('#', b, 0);
+		put_chr_vga('#', b, WINDOW_WIDTH-1);
+		b = b + WINDOW_WIDTH + WINDOW_OFFSCREEN;
+	}
+}
+
+void clear_screen() {
+	int a = 0, b = 0, pos=0;
+	for(a=0;a<WINDOW_HEIGHT;a++) {
+		for(b=0;b<WINDOW_WIDTH;b++) {
+			put_chr_vga(' ', 0, pos);
+			pos += 1;	
+		}
+		pos += WINDOW_OFFSCREEN;
+	}
+}
+
+#define FLIPPER_WIDTH 8
+#define FLIPPER_Y 31*ROW
+
+void erase_flipper(int x) {
+	int a = 0;
+	for(a=0;a<FLIPPER_WIDTH;a++)
+		put_chr_vga(' ', FLIPPER_Y, x+a);
+}
+
+void draw_flipper(int x) {
+	int a = 0;
+	for(a=0;a<FLIPPER_WIDTH;a++) {
+		put_chr_vga('_', FLIPPER_Y, x+a);
+	}
+}
+
+void draw_ball(int x, int y, int oldx, int oldy) {
+	put_chr_vga(' ', oldy, oldx);
+	put_chr_vga('*', y, x);
+}
+
+#define BALLZ_Y -5*ROW
+
+int main() {
+	int a = 0,b=0;
+	int flipper_x = 44, old_flipper_x=44;
+	int ballz_x = 44, ballz_y=BALLZ_Y, lastballz_x=44, lastballz_y=BALLZ_Y;
+	int ball_dir_x = 1, ball_dir_y = ROW;
+	int flipper_speed = 4;
+
+start_game:
+	a = get_chr();
+	clear_screen();
+	while (1) {
+//		delay();
+		draw_walls();
+		erase_flipper(old_flipper_x);
+		draw_flipper(flipper_x);
+		
+		draw_ball(ballz_x, ballz_y, lastballz_x, lastballz_y);
+
+		lastballz_x = ballz_x;
+		lastballz_y = ballz_y;
+		old_flipper_x = flipper_x;
+
+		a = get_kbd_nb();
+		if (a > -1) put_chr_vga(a, 0, 276);
+
+		if (a == 0x1c && flipper_x > 1)
+			flipper_x -= flipper_speed;
+		else if (a == 0x23 && flipper_x < (WINDOW_WIDTH - FLIPPER_WIDTH - 1))
+			flipper_x += flipper_speed;
+
+		a = get_chr_nb();
+		if (a > -1) put_chr(a);
+	 	
+		if (a == 'a' && flipper_x > 1)
+			flipper_x -= flipper_speed;
+		else if (a == 'd' && flipper_x < (WINDOW_WIDTH - FLIPPER_WIDTH - 1))
+			flipper_x += flipper_speed;
+
+		if (ballz_x < 2 || ballz_x > (WINDOW_WIDTH - 3)) {
+			ball_dir_x = -ball_dir_x;
+		}
+		if (ballz_y < TOPROW)
+			ball_dir_y = -ball_dir_y;
+		else if (ballz_y > FLIPPER_Y && (ballz_x > flipper_x && ballz_x < flipper_x + FLIPPER_WIDTH) )
+			ball_dir_y = -ball_dir_y; 
+		else if (ballz_y > FLIPPER_Y)
+			break;
+
+	
+		ballz_x += ball_dir_x;
+		ballz_y += ball_dir_y;
+
+
+		/*if (ballz_x > WINDOW_WIDTH) {
+			ballz_x = 0;
+			ballz_y += WINDOW_HEIGHT;
+		}*/
+	}
+
+
+	put_chr_vga('G', 640, 40);
+	put_chr_vga('a', 640, 41);
+        put_chr_vga('m', 640, 42);
+        put_chr_vga('e', 640, 43);
+        put_chr_vga(' ', 640, 44);
+        put_chr_vga('o', 640, 45);
+        put_chr_vga('v', 640, 46);
+        put_chr_vga('e', 640, 47);
+        put_chr_vga('r', 640, 48);
+        put_chr_vga('!', 640, 49);
+	goto start_game;
+	return 0;
+}
+

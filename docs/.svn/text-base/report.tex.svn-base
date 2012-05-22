@@ -1,0 +1,243 @@
+\documentclass{acm_proc_article-sp}
+
+\usepackage{listings}
+\lstset{language=C}
+\usepackage{program}
+
+\begin{document}
+
+\title{02211 \\ Advanced Computer Architecture}
+\subtitle{Group 4 Project Report - Design of a MIPS like processor}
+
+\numberofauthors{3}
+\author{
+% 1st. author
+\alignauthor Andreas Borup Svendsen\\
+       \affaddr{Department of Informatics and Mathematical Modeling}\\
+       \email{s072623@student.dtu.dk}
+% 2nd. author
+\alignauthor Attila S\"{u}k\"{o}sd\\
+       \affaddr{Department of Informatics and Mathematical Modeling}\\
+       \email{s070600@student.dtu.dk}
+% 3rd. author
+\alignauthor Kasper Grue Understrup\\
+       \affaddr{Department of Informatics and Mathematical Modeling}\\
+       \email{s061887@student.dtu.dk}
+}
+
+\maketitle
+
+\begin{abstract}
+This project presents a working MIPS like processor and assembler. The processor has been implemented from scratch in VHDL, as a learning experience. We have implemented the standard functions of the MIPS processor with forwarding and presented a UART and VGA output for debugging. The UART outputs via a serial cable, where the VGA output works through memory mapped I/O. We have been using ModelSim for testing and debugging. The assembler can be used to program our processor.
+
+To demonstrate the full capabilities of the processor, a simple pong style game was implemented.
+\end{abstract}
+
+\section{Introduction}
+\input{introduction}
+
+
+\input{Motivation}
+
+\section{MIPS design}\label{MIPS}
+\input{theory}
+
+\subsection{Hazards}
+\input{Hazards}
+
+\input{PipelineStages}
+
+\subsection{Other approaches}
+Before settling on the MIPS architecture, a number of other RISC instruction sets were considered. These are briefly described in the following section.
+
+\input{ARMarchitecture}
+\input{PICarchitecture}
+
+\section{Design and implementation} \label{sec:implementation}
+The MIPS like processor has been implemented in VHDL from scratch. The overall structure of the design is described below.
+
+\subsection{The MIPS like design}
+
+The top level component in our design is the \texttt{MIPSlike.vhd}; this file links each pipeline stage together. For simplicity we have been using the divide and conquer strategy and split the functionalities into several files. We have a separate file for each pipeline stage, the memory some MUXes and a ROM for our program. This helps debugging the code since units can be tested separately.
+
+The Instruction fetch stage is located in the \texttt{instructionFetch.vhd} file. This stage takes care of updating the program counter, and fetches the instruction from the program ROM. It takes some control signals for branching and jumping as inputs, and outputs a 32-bit instruction and a 32-bit program counter.
+
+The Instruction decode is located in the \texttt{instructionDecode.vhd} file. This stage reads the opcode of the instruction, which is the first six bits of the instruction. In our MIPS like processor, we have implemented all the basic functionalities of the MIPS architecture. We have, however, not implemented all the functionalities of the RISC architecture, we have not implemented a floating point unit and therefore floating point operations are not part of our MIPS like processor. For a detailed list of the supported functions view Appendix \ref{list}. There are many outputs from this stage since this stage determines what the processor must do.
+
+A potential problem that can come up in the IF stage is where the same register is being written to, while it is being read from. In many MIPS implementations, this is avoided by using opposite clock polarity, when doing reads and writes \footnote{E.g. writing on the rising edge of the clock and reading on the falling edge}. In our processor, a slightly different approach has been taken, and the registers being read and written are simply compared, and in case of a match, the data being written is forwarded to the output.
+
+The execute stage is split into two, where the forwarding logic is implemented in the \texttt{Forwarding.vhd} component, and the arithmetic parts are implemented in the \texttt{Execute.vhd} file.
+
+The forwarding stage compares the contents of the different pipeline registers with the data being processed, and replaces the data read from the register with a more recent version of the data, if one such exists. This way, some data hazards can be resolved without the need for stalling the processor.
+
+The execute stage contains the ALU, which is the arithmetic logic unit of the processor. We have implemented the basic functionality of the MIPS ISA, but some complex functions have been left out of the current version. For instance, a modern processor should also be able to deal with floating point formats which has a magnitude, an exponent and a sign extension. This format increases the range of numbers but also needs specific hardware, and as such has not been implemented. So this would probably have to be implemented before we attempt to sell our design.
+
+The memory access stage is located in the \texttt{memoryAccess.vhd} file. In this stage the memory can be accessed, by either reading from the memory or writing to it. % We have chosen to use a dual-port ram since it makes it possible to have two memory accesses at the same time.
+
+The Write back stage is located in the \texttt{WriteBack.vhd} file. In this stage the result of the ALU or the memory is written back to the registry if needed.
+
+Furthermore, keyboard input and VGA output have been implemented using memory mapped I/O.
+% Something about memory addresses and such??
+
+\subsection{FPGAimplementation}
+Our MIPS processor is implemented on the Spartan 3E-1600 Development Board\footnote{http://www.digilent.ro/Products/Detail.cfm?NavPath=\\2,400,793\&Prod=S3E1600} as shown in Figure \ref{fig:fpga}. This board has 1.6 M gates, a serial output and a 50 MHz clock. The board is somewhat different from the Altera Cyclone FPGA in the hardware lab. The Spartan board has fewer input buttons but has significantly more logic units, allowing for bigger designs. The Development environment is also different; to program the Spartan board, the Xilinx ISE design suite and Impact is the only choice, whereas the Quartus software must be used to design hardware for the Altera board. These environments are, of course, different to use.
+
+\begin{figure}[!h]
+\includegraphics[width=0.45\textwidth]{Images/Xilinx.jpg}
+\caption{Spartan 3E-1600 Development Board}
+\label{fig:fpga}
+\end{figure}
+
+\section{Running code on the MIPS like design}\label{running}
+
+The system calls from a typical C-program like \texttt{printf()} can of course not be implemented without an operating system, but the printf() can be outputted via the UART. 
+
+The assembler is located in the \texttt{assembler.c} file. This file takes a program file as input and delivers an output file named \texttt{outputFile} with no extension. To use the assembler, the c program must be compiled and run like this: \texttt{./assembler} ''program''. The Assembler implements out commenting, easy extension for new instructions, string handling and register renaming. % The assembler could assembles this code:
+
+To run these instructions on the MIPS, we have created a python program (\texttt{rommaker.py}) that inserts the machine code into a VHDL template. The template is called \texttt{rom.vhd} and is located in the ''MIPSlike'' folder. Ideally the instructions would load into an instruction cache but in our processor we hardcode it in the logic cells of the FPGA. We constructed a simple C program that calculates the Fibonacci Series. The program is shown in the appendix section \ref{C Code}. This code can be compiled into assembler code by applying the gcc compiler with the -S option, like this:
+\begin{itemize}
+\item[]gcc -S fibonacci.c
+\end{itemize}
+The obtained assembler code is shown in section \ref{assembler} with our comments. This code can then using our compiler be turned into machine code that works on our MIPS like processor. The command to do this is:
+
+\begin{itemize}
+\item[]./assembler "fibonacci.S"
+\end{itemize}
+
+\section{Test}\label{testing}
+\input{testing}
+\subsection{Fibonacci}
+The program calculates the Fibonacci numbers. The Fibonacci numbers which can be observed in nature, and can be mathematically derived by formula \ref{fibo} or by using the program on our MIPS like processor.
+\begin{eqnarray}\label{fibo}
+F_n=F_{n-1}+F_{n-2}
+\end{eqnarray}
+The processor correctly outputs the following numbers: % as shown in figure ******
+\begin{itemize}
+\item[] 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, \ldots
+\end{itemize}
+
+\subsection{GCC troubles} \label{sec:gcc}
+Although originally one of the main reasons for going with the MIPS architecture, was the availability of ready-made compilers and simulators. However, through testing and developing, it has become clear that the MIPS package of the gcc-compiler is not working optimally. For instance, the gcc compiler occasionally outputs a line like
+
+\begin{itemize}
+\item[]  slt \$t1, \$t2, 10
+\end{itemize}
+
+which does not make sense in the MIPS code used in \cite{Patterson:2008:COD:1502247}, since it is a mixture of an R-type and an I-type instruction. These instructions have to be manually replaced with the \texttt{slti} instruction, so it matches the data provided.
+
+Another issue with the compiler is, that it does not utilize the full range of registers. This does not produce wrong results, but it hurts performance, since the same value has to be loaded numerous times. This can also be fixed by manually renaming the relevant registers. However, this is a lot of work to keep track of, even for smaller programs.
+
+\input{Futurework}
+
+\section{Conclusions}\label{conclusion}
+
+We have implemented a basic working MIPS processor. The processor implements the basic functions allowing simple integer based programs to be compiled and run. Forwarding has been implemented to improve the performance of the processor, and simple I/O memory mapping provides an improved user experience.
+
+The capabilities of the processor can be demonstrated by running a simple pong game, which not only showcases the memory mapped I/O, but also demonstrates the processor stability, and that the partial MIPS instruction set is sufficient to run even somewhat advanced programs consisting of more than a thousand instruction.
+
+\bibliographystyle{abbrv}
+\bibliography{report} 
+
+
+\newpage
+
+\appendix
+
+\section{Implemented Functions} \label{list}
+
+\begin{itemize}
+\item ADD -- Add (with overflow)
+\item ADDI -- Add immediate (with overflow)
+\item ADDIU -- Add immediate unsigned (no overflow)
+\item ADDU -- Add unsigned (no overflow)
+\item AND -- Bitwise and
+\item ANDI -- Bitwise and immediate
+\item BEQ -- Branch on equal
+%\item BGEZ -- Branch on greater than or equal to zero
+%\item BGEZAL -- Branch on greater than or equal to zero and link
+%\item BGTZ -- Branch on greater than zero
+%\item BGTZ -- Branch on greater than zero
+%\item BLTZ -- Branch on less than zero
+%\item BLTZAL -- Branch on less than zero and link
+\item BNE -- Branch on not equal
+%\item DIV -- Divide
+%\item DIVU -- Divide unsigned
+\item J -- Jump
+\item JAL -- Jump and link
+\item JR -- Jump register
+%\item LB -- Load byte
+%\item LUI -- Load upper immediate
+\item LW -- Load word
+%\item MFHI -- Move from HI
+%\item MFLO -- Move from LO
+%\item MULT -- Multiply 
+%\item MULTU -- Multiply unsigned
+\item NOP -- no operation (Pseudo instruction)
+\item NOR -- Bitwise not OR
+\item OR -- Bitwise or
+\item ORI -- Bitwise or immediate
+%\item SB -- Store byte
+\item SLL -- Shift left logical 
+%\item SLLV -- Shift left logical variable
+\item SLT -- Set on less than (signed)
+\item SLTI -- Set on less than immediate (signed)
+\item SLTIU -- Set on less than immediate unsigned
+\item SLTU -- Set on less than unsigned
+%\item SRA -- Shift right arithmetic
+\item SRL -- Shift right logical
+%\item SRLV -- Shift right logical variable
+\item SUB -- Subtract
+\item SUBU -- Subtract unsigned
+\item SW -- Store word
+%\item SYSCALL -- System call
+\item XOR -- Bitwise exclusive or
+\item XORI -- Bitwise exclusive or immediate
+
+\end{itemize}
+\newpage
+\section{Fibbonacci C Code} \label{C Code}
+The Fibonacci C code is listed below. The pong code is a bit too large to include in the report, but will be uploaded along with the digital handin.
+
+\begin{lstlisting}
+#include "standard.h"
+
+int main ()
+{
+  int a = 0,f=5;
+  while (1) {
+	a = get_chr();
+  	fibonacci(f);
+	f++;
+  }
+  return 0;
+}
+
+int fibonacci(int n)
+{
+  int a = 0;
+  int b = 1;
+  int sum;
+  int i;
+  for (i=0;i<n;i++)
+  {
+    put_hex(a);
+    put_chr(' ');
+    sum = a + b;
+    a = b;
+    b = sum;
+  }
+  put_chr('\r');
+  put_chr('\n');
+  return 0;
+}
+
+\end{lstlisting}
+\newpage
+\section{Fibonacci Assembler code} \label{assembler}
+\input{Assembler}
+
+% \section{Machine Code}\label{Machinecode}
+% \input{Machinecode}
+
+\balancecolumns
+\end{document}

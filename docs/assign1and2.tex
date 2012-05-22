@@ -1,0 +1,79 @@
+\section{from assignments}
+
+Since we are working with the basic MIPS instructions, there are already numerous sources describing the instructions in great detail, so instead of further describing the instructions we refer to section \ref{list} for a list on the implemented functions.
+
+\subsection{Motivation}
+The MIPS instruction set is well tested, and has a lot of advantages. The fixed length 32-bit instruction words allow for smarter hardware implementation, especially since the structure of the instruction words is fixed, so that instructions can be passed on through pipelined stages and be decoded along the way, instead of having to be decoded all at once.
+
+By using the full core instruction set, we have the added advantage of being able to compile real programs into MIPS assembler code, which can be run directly on our processor. Had we instead chosen to work on a modified version of the MIPS instruction set or a smaller subset, a compiler would have had to be written from scratch, or any program that was to run on the processor would have to be written in assembler. Both these solutions would involve a lot of work, which would not be directly relevant for the purpose of this course.
+
+\subsection{Future work}
+A functioning MIPS processor is up and running, but we have not implemented all functions. We hope to be able to expand the processors instruction set, and are currently considering a number of options. One obvious expansion could be the inclusion of floating point instruction, which would, of course, require an implementation of a floating point co-processor. This has the added advantage, that we would still be able to use existing compilers to generate our assembler code.
+
+An alternative could be to expand the instruction set with new instructions (e.g. more elaborate one-cycle branch instructions such as 'branch if less than' or others). These would however require some sort of custom assembler code to be generated, but we will cross that bridge when (and if) we get to it. 
+
+We could also implement hardware accelerators to do specific task like graphic accelerator or to calculate cash flows for economic systems. 
+
+Yet another possibility would be to work on parts of the processor design not directly related to the instruction set. This could for instance be to work on the memory access and hierarchy, and / or getting the FPGA to output simple graphics from the MIPS over the VGA output.
+
+\subsection{Other approaches - The ARM architecture}
+ARM (Advanced RISC Machine) is a 32-bit reduced instruction set computer (RISC) instruction set architecture (ISA). ARM has evolved over time, with the most recent revision defining three profiles: application, real-time and microcontroller. Each profile adds various instructions, so, in order to keep it simple, the following will consider the original implementation of ARM.
+Originally ARM was hardwired without microcode in order to keep the design clean. It included the following RISC features:
+
+\begin{itemize}
+\item Load/store architecture.
+\item No support for misaligned memory accesses.
+\item Uniform 32-bit register file.
+\item Fixed instruction width of 32 bits
+\item Mostly single-cycle execution.
+\end{itemize}
+Some additional design features were used to compensate for the simple design:
+
+\begin{itemize}
+\item Conditional execution of most instructions in order to reduce branch overhead and compensate for the lack of a branch predictor.
+\item Arithmetic instructions only alter condition codes when desired.
+\item 32-bit barrel shifter which can be used without performance penalty with most arithmetic instructions and address calculations.
+\item Powerful indexed addressing modes.
+\item A link register for fast leaf function calls.
+\item Simple, but fast, 2-priority-level interrupt subsystem with switched register banks.
+\end{itemize}
+Newer revisions now have support for misaligned memory accesses, with some exceptions related to load/store multiple word instructions.
+ARM has 37 Registers in total, all of which are 32-bits long. These are used as follows:
+\begin{itemize}
+\item 1 dedicated program counter
+\item 1 dedicated current program status register
+\item 5 dedicated saved program status registers
+\item 30 general purpose registers
+\end{itemize}
+Earlier ARM implementations have a three stage pipeline, the stages being: fetch, decode and execute. Later designs have deeper pipelines for higher performance. The ARM processor used in iPhone 3GS has 13 stages. Other features and instructions have been developed to enhance performance, particularly the applications profile has been enhanced for multimedia performance.
+
+\subsubsection{The PIC architecture}
+With over 10 billion PIC microcontrollers sold world-wide as of September 2011\footnote{http://www.microchip.com/pagehandler/en-us/press-release/microchip-technology-delivers-10-billionth-pic-mic.html}, the RISC based PIC family is one the most common architectures around. The instruction set has been expanded over the years, but for this assignment, we have chosen to focus on the PIC16 instruction set, with just 35 instructions (even though an even simpler 12-bit instruction word set with 32 instructions exists).
+The instruction set is of the accumulator type, which means that many instructions use an implied accumulator register called W0, which allows for shorter OP-codes, since the register address is not needed in the instruction. These instructions often have a 1-bit input operand called d, which allows selecting whether to write the result to the accumulator register or to the other register involved.
+The instructions are 14-bit words, and can be divided into four general categories:
+\begin{itemize}
+\item Byte-oriented file register operations
+\begin{itemize}
+\item Operations on byte values, in the accumulator register and one additional register.
+\end{itemize}
+\item Bit-oriented file register operations
+\begin{itemize}
+\item Operations that test and/or set specific bits in a register.
+\end{itemize}
+\item Literal operations
+\begin{itemize}
+\item Operations on the accumulator register with a byte value given as the 8 LSB of the instruction
+\end{itemize}
+\item Control operations
+\begin{itemize}
+\item Sleep, Goto, Return etc.
+\end{itemize}
+\end{itemize}
+The instruction set supports 128 8-bit registers, of which the first 32 are reserved for special purpose registers, and the remaining 96 bytes are available as regular RAM.
+
+
+
+
+
+
+

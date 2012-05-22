@@ -1,0 +1,10 @@
+
+\subsection{Future work} \label{sec:future}
+
+A functioning MIPS processor is up and running, but we have not implemented all functions included in the MIPS instruction set. We hope to be able to expand the processors instruction set, and are currently considering a number of options. One obvious expansion could be the inclusion of floating point instructions, which would, of course, require an implementation of a floating point co-processor. This has the added advantage, that we would still be able to use existing compilers to generate our assembler code.
+
+An alternative could be to expand the instruction set with new instructions (e.g. more elaborate one-cycle branch instructions such as 'branch if less than' or others). These would however require some sort of custom assembler code to be generated, but we will cross that bridge when (and if) we get to it. 
+
+We could also implement hardware accelerators to do specific task like graphic accelerator or to calculate cash flows for economic systems. 
+
+Finally, the memory structure and hierarchy could be organized and developed further. This could include using a bootloader to load programs into the onboard ROM on the FPGA, or implementing a cache structure.

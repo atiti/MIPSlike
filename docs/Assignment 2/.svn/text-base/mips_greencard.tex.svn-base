@@ -1,0 +1,34 @@
+\begin{tabular}{ l l l l }
+ NAME                        & MNEMONIC & FORMAT & OPERATION                                             \\
+ Add                         & add      & R      & R[rd] = R[rs] + R[rt]                                 \\
+ Add Immediate               & addi     & I      & R[rt] = R[rs] + SignExtImm                            \\
+ Add Imm. Unsigned           & addiu    & I      & R[rt] = R[rs] + SignExtImm                            \\
+ Add Unsigned                & addu     & R      & R[rd] = R[rs] + R[rt]                                 \\
+ And                         & and      & R      & R[rd] = R[rs] \& R[rt]                                \\
+ And Immediate               & andi     & I      & R[rt] = R[rs] \& ZeroExtImm                           \\
+ Branch On Equal             & beq      & I      & if(R[rs]==R[rt]) PC=PC+4+BranchAddr                   \\
+ Branch On Not Equal         & bne      & I      & if(R[rs]!=R[rt]) PC=PC+4+BranchAddr                   \\
+ Jump                        & j        & J      & PC=JumpAddr                                           \\
+ Jump And Link               & jal      & J      & R[31]=PC+8;PC=JumpAddr                                \\
+ Jump Register               & jr       & R      & PC=R[rs]                                              \\
+ Load Byte Unsigned          & lbu      & I      & R[rt]={24’b0,M[R[rs]+SignExtImm](7:0)}                \\
+ Load Halfword Unsigned      & lhu      & I      & R[rt]={16’b0,M[R[rs]+SignExtImm](15:0)}               \\
+ Load Linked                 & ll       & I      & R[rt] = M[R[rs]+SignExtImm]                           \\
+ Load Upper Imm.             & lui      & I      & R[rt] = {imm, 16’b0}                                  \\
+ Load Word                   & lw       & I      & R[rt] = M[R[rs]+SignExtImm]                           \\
+ Nor                         & nor      & R      & R[rd] = ~(R[rs] | R[rt])                              \\
+ Or                          & or       & R      & R[rd] = R[rs] | R[rt]                                 \\
+ Or Immediate                & ori      & I      & R[rt] = R[rs] | ZeroExtImm                            \\
+ Set Less Than               & slt      & R      & R[rd] = (R[rs] < R[rt]) ? 1 : 0                       \\
+ Set Less Than Imm.          & slti     & I      & R[rt] = (R[rs] < SignExtImm)? 1 : 0                   \\
+ Set Less Than Imm. Unsigned & sltiu    & I      & R[rt] = (R[rs] < SignExtImm) ?1:0                     \\
+ Set Less Than Unsig.        & sltu     & R      & R[rd] = (R[rs] < R[rt]) ? 1 : 0                       \\
+ Shift Left Logical          & sll      & R      & R[rd] = R[rt] << shamt                                \\
+ Shift Right Logical         & srl      & R      & R[rd] = R[rt] >> shamt                                \\
+ Store Byte                  & sb       & I      & M[R[rs]+SignExtImm](7:0) = R[rt](7:0)                 \\
+ Store Conditional           & sc       & I      & M[R[rs]+SignExtImm] = R[rt]; R[rt] = (atomic) ? 1 : 0 \\
+ Store Halfword              & sh       & I      & M[R[rs]+SignExtImm](15:0) = R[rt](15:0)               \\
+ Store Word                  & sw       & I      & M[R[rs]+SignExtImm] = R[rt]                           \\
+ Subtract                    & sub      & R      & R[rd] = R[rs] - R[rt]                                 \\
+ Subtract Unsigned           & subu     & R      & R[rd] = R[rs] - R[rt]                                 \\
+\end{tabular}

@@ -1,0 +1,112 @@
+	.file	1 "simple-out.c"
+	.section .mdebug.abi32
+	.previous
+	.abicalls
+	.text
+	.align	2
+	.globl	put_chr
+	.ent	put_chr
+	.type	put_chr, @function
+put_chr:
+	.frame	$sp,24,$31		# vars= 16, regs= 0/0, args= 0, gp= 8
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.cpload	$25
+	.set	reorder
+	addiu	$sp,$sp,-24
+	sw	$4,24($sp)
+	sw	$0,8($sp)
+	li	$2,16384			# 0x4000
+	sw	$2,12($sp)
+	li	$2,49152			# 0xc000
+	sw	$2,16($sp)
+$L2:
+	lw	$2,8($sp)
+	bne	$2,$0,$L3
+	lw	$2,12($sp)
+	lw	$2,0($2)
+	andi	$2,$2,0x1
+	sw	$2,8($sp)
+	b	$L2
+$L3:
+	lw	$3,16($sp)
+	lw	$2,24($sp)
+	sw	$2,0($3)
+	addiu	$sp,$sp,24
+	j	$31
+	.end	put_chr
+	.align	2
+	.globl	get_chr
+	.ent	get_chr
+	.type	get_chr, @function
+get_chr:
+	.frame	$sp,24,$31		# vars= 16, regs= 0/0, args= 0, gp= 8
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.cpload	$25
+	.set	reorder
+	addiu	$sp,$sp,-24
+	sw	$0,8($sp)
+	li	$2,16384			# 0x4000
+	sw	$2,12($sp)
+	li	$2,49152			# 0xc000
+	sw	$2,16($sp)
+$L5:
+	lw	$2,8($sp)
+	bne	$2,$0,$L6
+	lw	$2,12($sp)
+	lw	$2,0($2)
+	andi	$2,$2,0x2
+	sw	$2,8($sp)
+	b	$L5
+$L6:
+	lw	$2,16($sp)
+	lw	$2,0($2)
+	addiu	$sp,$sp,24
+	j	$31
+	.end	get_chr
+	.align	2
+	.globl	main
+	.ent	main
+	.type	main, @function
+main:
+	.frame	$sp,144,$31		# vars= 112, regs= 1/0, args= 16, gp= 8
+	.mask	0x80000000,-8
+	.fmask	0x00000000,0
+	.set	noreorder
+	.cpload	$25
+	.set	reorder
+	addiu	$sp,$sp,-144
+	sw	$31,136($sp)
+	.cprestore	16
+$L8:
+	sw	$0,24($sp)
+$L10:
+	lw	$2,24($sp)
+	slt	$2,$2,25
+	beq	$2,$0,$L11
+	lw	$2,24($sp)
+	sll	$3,$2,2
+	addiu	$2,$sp,24
+	addu	$3,$3,$2
+	lw	$2,24($sp)
+	addiu	$2,$2,97
+	sw	$2,8($3)
+	lw	$2,24($sp)
+	sll	$3,$2,2
+	addiu	$2,$sp,24
+	addu	$2,$3,$2
+	lw	$4,8($2)
+	jal	put_chr
+	lw	$2,24($sp)
+	addiu	$2,$2,1
+	sw	$2,24($sp)
+	b	$L10
+$L11:
+	li	$4,10			# 0xa
+	jal	put_chr
+	b	$L8
+	.end	main
+	.ident	"GCC: (GNU) 3.4.6"

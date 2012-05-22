@@ -1,0 +1,11 @@
+#this is a comment
+
+        .text
+        .globl  main
+main:
+	addiu $11,$4,0x6
+	add $3,$5,$7
+	div $5,$8
+	div $5 123($5)
+	lb $t, 8($s)
+	beq $3,$5,0x1

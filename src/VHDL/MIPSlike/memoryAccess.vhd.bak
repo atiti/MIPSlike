@@ -1,0 +1,107 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+entity memoryAccess is
+   port(Clk,Reset           : in std_logic;
+        Zero : in std_logic;
+        MemoryCTLin           : in std_logic_vector(2 downto 0);
+        Address                       : in std_logic_vector(31 downto 0);
+        WriteData                     : in std_logic_vector(31 downto 0);
+        Branch                        : out std_logic;
+        ReadData                      : out std_logic_vector(31 downto 0);
+		  rxd					: in std_logic;
+		  txd					: out std_logic);
+end memoryAccess;
+
+architecture Behavioral of memoryAccess is
+
+	component dualport_async_ram is
+         generic ( addr_width : integer := 10;
+                   data_width : integer := 32
+         );
+ 	   port ( clk : in  STD_LOGIC;
+           we : in  STD_LOGIC;
+           addr_a : in  std_logic_vector(addr_width-1 downto 0);
+           addr_b : in  std_logic_vector(addr_width-1 downto 0);
+           din_a : in  std_logic_vector(data_width-1 downto 0);
+           dout_a : out  std_logic_vector(data_width-1 downto 0);
+           dout_b : out  std_logic_vector(data_width-1 downto 0));
+	end component;
+
+  component sc_uart is
+    generic (addr_bits : integer := 2;
+	   clk_freq : integer := 50000000;
+	   baud_rate : integer := 115200;
+	   txf_depth : integer := 4; txf_thres : integer := 2;
+	   rxf_depth : integer := 4; rxf_thres : integer := 2);
+    port (
+	   clk		: in std_logic;
+	   reset	: in std_logic;
+
+   	 address		: in std_logic_vector(addr_bits-1 downto 0);
+	   wr_data		: in std_logic_vector(31 downto 0);
+   	 rd, wr		: in std_logic;
+	   rd_data		: out std_logic_vector(31 downto 0);
+	   rdy_cnt		: out unsigned(1 downto 0);
+
+	   txd		: out std_logic;
+	   rxd		: in std_logic;
+	   ncts	: in std_logic;
+	   nrts	: out std_logic
+    );
+  end component;
+
+
+  -- These signals need to be mapped to the fpga
+  signal ncts,nrts,rd,wr,mem_we : std_logic := '0';
+  signal rdy_cnt : unsigned(1 downto 0);
+  signal rd_data : std_logic_vector(31 downto 0);
+  -- END
+
+	signal addrb : std_logic_vector(13 downto 0);
+	signal doutb,dataout : std_logic_vector(31 downto 0);
+  signal mainmem_data : std_logic_vector(31 downto 0);
+  signal chip_select : std_logic_vector(0 to 2);
+begin
+  process(Address,chip_select,MemoryCTLin)
+    variable tmpcs : std_logic_vector(0 to 2);
+  begin 
+    if Address(14) = '1' then
+       tmpcs := "010";
+    else
+       tmpcs := "100";
+    end if;  
+    chip_select <= tmpcs;
+  end process;
+
+
+  process(chip_select,rd_data,mainmem_data)
+  begin
+    case chip_select is
+		  -- Main memory
+		  when "100" =>
+       dataout <= mainmem_data;
+      when "010" =>
+       dataout <= rd_data;
+      when others =>  dataout <= (others => '0');
+    end case;
+  end process;
+
+  ReadData <= dataout;
+  Branch <= Zero and MemoryCTLin(2);
+  
+  -- Main Memory
+	addrb <= (others => '0');
+	mem_we <= '1' when (chip_select(0) = '1' and MemoryCTLin(0) = '1') else '0';
+	dpr1: dualport_async_ram port map(clk=>Clk,we=>mem_we,addr_a=>Address(9 downto 0),addr_b=>addrb,
+					  din_a=>WriteData,dout_a=>mainmem_data,dout_b=>doutb);
+
+  -- Serial memory
+  rd <= '1' when (chip_select(1) = '1' AND Address(14) = '1' AND MemoryCTLin(0) = '0') else '0';
+  wr <= '1' when (chip_select(1) = '1' AND MemoryCTLin(0) = '1') else '0';
+  ser1: sc_uart port map (clk=>Clk,reset=>Reset,address=>Address(16 downto 15),wr_data=>WriteData,rd=>rd,wr=>wr,
+          rd_data=>rd_data,rdy_cnt=>rdy_cnt,txd=>txd,rxd=>rxd,ncts=>ncts,nrts=>nrts);
+
+end Behavioral;
+
